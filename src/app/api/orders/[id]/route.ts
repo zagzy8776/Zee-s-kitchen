@@ -9,7 +9,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   if (!(await authorized())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { id } = await params; const sql = db();
-    const [order] = await sql`SELECT id, customer_name, phone, email, order_date, preferred_time, fulfillment, notes, status, total_cents, created_at FROM orders WHERE id=${id}`;
+    const [order] = await sql`SELECT id, customer_name, phone, email, order_date, preferred_time, fulfillment, delivery_address, delivery_city, delivery_province, delivery_postal_code, notes, status, total_cents, created_at FROM orders WHERE id=${id}`;
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
     const items = await sql`SELECT menu_item_id, name, quantity, unit_price_cents FROM order_items WHERE order_id=${id}`;
     return NextResponse.json({ order: { ...order, items } });
