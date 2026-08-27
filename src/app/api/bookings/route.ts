@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { adminCookieName, isAdminToken } from "@/lib/admin-auth";
+
+export async function POST(request:Request){try{const b=await request.json();if(!b.name||!b.phone||!b.date||!b.time||!Number.isInteger(b.guests)||b.guests<1||b.guests>100)return NextResponse.json({error:"Please provide valid booking details"},{status:400});const sql=db();const [existing]=await sql`SELECT COUNT(*)::int AS count FROM bookings WHERE booking_date=${b.date} AND booking_time=${b.time} AND status IN ('pending','confirmed')`;if(existing.count>0)return NextResponse.json({error:"That time is already requested. Please choose another time."},{status:409});const [booking]=await sql`INSERT INTO bookings(customer_name,phone,email,booking_date,booking_time,guests,occasion,notes) VALUES(${b.name.trim()},${b.phone.trim()},${b.email?.trim()||null},${b.date},${b.time},${b.guests},${b.occasion?.trim()||null},${b.notes?.trim()||null}) RETURNING id,status,created_at`;return NextResponse.json({booking},{status:201})}catch(e){console.error(e);return NextResponse.json({error:"Unable to create booking"},{status:500})}}
+
+export async function GET(){if(!isAdminToken((await cookies()).get(adminCookieName())?.value))return NextResponse.json({error:"Unauthorized"},{status:401});try{const sql=db();const bookings=await sql`SELECT id,customer_name,phone,email,booking_date,booking_time,guests,occasion,notes,status,created_at FROM bookings ORDER BY booking_date ASC,booking_time ASC LIMIT 100`;return NextResponse.json({bookings})}catch{return NextResponse.json({error:"Unable to load bookings"},{status:500})}}
