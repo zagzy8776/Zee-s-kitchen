@@ -13,6 +13,7 @@ export default function Home(){
  const featured=items[0];
  const categories=["All","Rice & Bowls","Chicken","Sides","Specials"];
  return <main>
+  <style jsx global>{`@media(max-width:800px){.nav-book,.nav-order{min-height:50px;padding:0 16px;font-size:13px}.hero-actions{width:100%;flex-direction:column;align-items:stretch}.hero-primary,.hero-secondary{width:100%;min-height:56px;justify-content:center}.hero-secondary{padding:0 18px;border:1px solid var(--line);border-radius:999px}.order-strip{display:none}.booking-cta .primary{min-height:56px;font-size:15px}.food-image button{width:54px;height:54px}.scribble{display:none}}@media(max-width:430px){.nav-book{display:inline-flex}.nav-order{padding-inline:14px}.nav-actions{gap:6px}.nav-book,.nav-order{min-height:46px;font-size:12px}.brand{font-size:13px}.brand span{width:30px;height:30px}}`}</style>
   <nav className="nav shell">
    <a className="brand" href="#top"><span>Z</span> Zee&apos;s Kitchen</a>
    <div className="nav-links"><a href="/menu">Menu</a><a href="/book">Book</a><a href="#story">Our story</a><a href="#contact">Contact</a></div>
