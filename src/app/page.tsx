@@ -30,6 +30,20 @@ export default function Home(){
   </section>
   <section className="booking-cta shell"><div><p className="eyebrow">MAKING IT A SPECIAL ONE?</p><h2>Save your seat at the table.</h2><p>For dinners, birthdays and celebrations, send us a booking request and we&apos;ll confirm the details with you.</p></div><a className="primary" href="/book">Book with us <span>→</span></a></section>
   <section id="story" className="story shell"><div className="story-photo"/><div className="story-copy"><p className="eyebrow">A LITTLE ABOUT US</p><h2>Zee&apos;s comfort kitchen is my baby.</h2><p>From the first order to the last bite, everything is made to feel personal. This is food for birthdays, busy weeks, family tables and the days when you simply need something good.</p><a className="text-link" href="#contact">Get in touch →</a></div></section>
-  <footer id="contact" className="footer shell"><div><a className="brand" href="#top"><span>Z</span> Zee&apos;s Kitchen</a><p>Comfort food, made with love in Winnipeg, Manitoba.</p><div className="footer-contact"><a href="https://wa.me/12049635748">WhatsApp: 204-963-5748</a><a href="https://www.tiktok.com/@zeescomfortkitchen">TikTok: @zeescomfortkitchen</a><a href="/book">Book a table →</a></div></div><div className="footer-meta"><span>24–48hr notice</span><span>Pickup &amp; delivery available on request</span><span>© 2026 Zee&apos;s Kitchen</span></div></footer>
+  <footer id="contact" className="footer shell">
+   <div className="footer-main">
+    <a className="brand" href="#top"><span>Z</span> Zee&apos;s Kitchen</a>
+    <p>Comfort food, made with love in Winnipeg, Manitoba.</p>
+    <div className="footer-contact">
+     <a className="contact-item" href="https://wa.me/12049635748" target="_blank" rel="noreferrer"><span className="contact-icon">WA</span><span><b>WhatsApp</b><small>204-963-5748</small></span></a>
+     <a className="contact-item" href="https://www.tiktok.com/@zeescomfortkitchen" target="_blank" rel="noreferrer"><span className="contact-icon">TT</span><span><b>TikTok</b><small>@zeescomfortkitchen</small></span></a>
+     <a className="contact-item" href="https://www.snapchat.com/add/monkele_1" target="_blank" rel="noreferrer"><span className="contact-icon">SC</span><span><b>Snapchat</b><small>@monkele_1</small></span></a>
+    </div>
+   </div>
+   <div className="footer-side">
+    <a className="footer-book" href="/book">Book a table <span>→</span></a>
+    <div className="footer-meta"><span>24–48hr notice</span><span>Pickup &amp; delivery available on request</span><span>© 2026 Zee&apos;s Kitchen</span></div>
+   </div>
+  </footer>
  </main>
 }
