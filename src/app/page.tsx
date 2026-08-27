@@ -4,6 +4,12 @@ import {useCart} from "@/context/cart-context";
 
 type Item={id:string;name:string;description:string;price_cents:number;category:string;image:string;available:boolean;sort_order:number};
 
+function SocialIcon({type}:{type:"whatsapp"|"tiktok"|"snapchat"}){
+ if(type==="whatsapp") return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .4 5.2.4 11.6c0 2 .5 3.9 1.5 5.6L.3 23.7l6.7-1.7c1.6.9 3.3 1.3 5.1 1.3h.1c6.4 0 11.6-5.2 11.6-11.6 0-3.1-1.2-6-3.3-8.2Zm-8.3 17.8h-.1c-1.6 0-3.2-.4-4.6-1.2l-.3-.2-4 .9 1.1-3.9-.2-.3a9.7 9.7 0 1 1 8.1 4.7Zm5.3-7.3c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-1.7-.8-2.8-1.5-3.9-3.4-.3-.5.3-.5.8-1.6.1-.2.1-.4 0-.6l-.9-2.1c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.6 0 1.5 1.1 3 1.2 3.2.1.2 2.2 3.4 5.4 4.8.8.3 1.4.5 1.9.7.8.2 1.5.2 2 .1.6-.1 1.8-.7 2.1-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.3Z"/></svg>;
+ if(type==="tiktok") return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.6 5.3c-1.5-1-2.4-2.6-2.5-4.3h-3.5v15.1c0 1.8-1.5 3.2-3.3 3.2-1.8 0-3.2-1.4-3.2-3.1 0-1.8 1.5-3.2 3.3-3.2.3 0 .7 0 1 .1V9.5c-.3 0-.7-.1-1-.1-3.7 0-6.7 3-6.7 6.7s3 6.6 6.7 6.6c3.7 0 6.7-3 6.7-6.6V8.4c1.3.9 2.8 1.5 4.5 1.5V6.4c-.7 0-1.4-.3-2-.7Z"/></svg>;
+ return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.2c-3.7 0-6.8 2.4-7.9 5.7C2.1 7.6.8 9.2.8 11.3c0 1.5.7 2.8 1.8 3.7-.1.4-.2.9-.2 1.3 0 2.4 2 4.3 4.4 4.3.5 0 .9-.1 1.3-.2 1 .9 2.3 1.5 3.8 1.5s2.8-.6 3.8-1.5c.4.1.9.2 1.3.2 2.4 0 4.4-1.9 4.4-4.3 0-.5-.1-.9-.2-1.3 1.1-.9 1.8-2.2 1.8-3.7 0-2.1-1.3-3.7-3.3-4.4C16.8 3.6 15.7 1.2 12 1.2Zm0 17.2c-1.1 0-2.1-.4-2.8-1.1-.4.2-.9.3-1.4.3-1.5 0-2.7-1.1-2.7-2.5 0-.6.2-1.1.6-1.5-.9-.5-1.5-1.4-1.5-2.5 0-1.5 1.2-2.6 2.8-2.7C7.4 5.8 9.5 4 12 4s4.6 1.8 5 4.4c1.6.1 2.8 1.2 2.8 2.7 0 1.1-.6 2-1.5 2.5.4.4.6.9.6 1.5 0 1.4-1.2 2.5-2.7 2.5-.5 0-1-.1-1.4-.3-.7.7-1.7 1.1-2.8 1.1Z"/><path fill="currentColor" d="M9 11.1c.6 0 1.1-.4 1.1-.9s-.5-.9-1.1-.9-1.1.4-1.1.9.5.9 1.1.9Zm6 0c.6 0 1.1-.4 1.1-.9s-.5-.9-1.1-.9-1.1.4-1.1.9.5.9 1.1.9Zm-5.2 2.3c.8.7 1.6 1 2.2 1s1.4-.3 2.2-1c-.1-.3-.3-.5-.6-.5h-3.2c-.3 0-.5.2-.6.5Z"/></svg>;
+}
+
 export default function Home(){
  const{add,count}=useCart();
  const[items,setItems]=useState<Item[]>([]);
@@ -35,9 +41,9 @@ export default function Home(){
     <a className="brand" href="#top"><span>Z</span> Zee&apos;s Kitchen</a>
     <p>Comfort food, made with love in Winnipeg, Manitoba.</p>
     <div className="footer-contact">
-     <a className="contact-item" href="https://wa.me/12049635748" target="_blank" rel="noreferrer"><span className="contact-icon">WA</span><span><b>WhatsApp</b><small>204-963-5748</small></span></a>
-     <a className="contact-item" href="https://www.tiktok.com/@zeescomfortkitchen" target="_blank" rel="noreferrer"><span className="contact-icon">TT</span><span><b>TikTok</b><small>@zeescomfortkitchen</small></span></a>
-     <a className="contact-item" href="https://www.snapchat.com/add/monkele_1" target="_blank" rel="noreferrer"><span className="contact-icon">SC</span><span><b>Snapchat</b><small>@monkele_1</small></span></a>
+     <a className="contact-item" href="https://wa.me/12049635748" target="_blank" rel="noreferrer"><span className="contact-icon"><SocialIcon type="whatsapp"/></span><span><b>WhatsApp</b><small>204-963-5748</small></span></a>
+     <a className="contact-item" href="https://www.tiktok.com/@zeescomfortkitchen" target="_blank" rel="noreferrer"><span className="contact-icon"><SocialIcon type="tiktok"/></span><span><b>TikTok</b><small>@zeescomfortkitchen</small></span></a>
+     <a className="contact-item" href="https://www.snapchat.com/add/monkele_1" target="_blank" rel="noreferrer"><span className="contact-icon"><SocialIcon type="snapchat"/></span><span><b>Snapchat</b><small>@monkele_1</small></span></a>
     </div>
    </div>
    <div className="footer-side">
