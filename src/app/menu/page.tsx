@@ -1,3 +1,6 @@
+import "../globals.css";
+import "./menu.css";
+
 const menu = [
   { category: "Rice & Bowls", items: ["Signature Jollof Bowl", "Fried Rice Bowl", "Party Jollof Tray"] },
   { category: "Chicken", items: ["Comfort Chicken Box", "Peppered Chicken", "Crispy Chicken"] },
@@ -21,7 +24,7 @@ export default function MenuPage() {
             {group.items.map((item, index) => (
               <article className="menu-row" key={item}>
                 <div><span>0{index + 1}</span><h3>{item}</h3></div>
-                <button>Add to order <b>+</b></button>
+                <button type="button" aria-label={`Add ${item} to order`}>Add to order <b>+</b></button>
               </article>
             ))}
           </section>
