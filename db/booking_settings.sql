@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS booking_settings (id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id=1),timezone TEXT NOT NULL DEFAULT 'America/Winnipeg',slot_minutes INTEGER NOT NULL DEFAULT 30 CHECK (slot_minutes BETWEEN 15 AND 120),max_guests_per_slot INTEGER NOT NULL DEFAULT 20 CHECK (max_guests_per_slot > 0),open_time TIME NOT NULL DEFAULT '11:00',close_time TIME NOT NULL DEFAULT '21:00',updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+INSERT INTO booking_settings(id) VALUES (1) ON CONFLICT(id) DO NOTHING;
+CREATE INDEX IF NOT EXISTS bookings_date_time_status_idx ON bookings(booking_date,booking_time,status);
