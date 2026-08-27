@@ -6,6 +6,9 @@ import { CartProvider } from "@/context/cart-context";
 export const metadata: Metadata = {
   title: "Zee's Comfort Kitchen",
   description: "Comfort food made with love. Order from Zee's Kitchen.",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#111111",
+  appleWebApp: {capable: true,title: "Zee's Kitchen",statusBarStyle: "default"},
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
