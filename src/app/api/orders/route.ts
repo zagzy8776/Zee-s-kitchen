@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { adminCookieName, isAdminToken } from "@/lib/admin-auth";
+
+async function requireAdmin() {
+  const token = (await cookies()).get(adminCookieName())?.value;
+  return isAdminToken(token);
+}
 
 export async function GET() {
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const sql = db();
-    const orders = await sql`SELECT id, customer_name, fulfillment, status, total_cents, created_at FROM orders ORDER BY created_at DESC LIMIT 100`;
+    const orders = await sql`SELECT id, customer_name, phone, email, order_date, preferred_time, fulfillment, notes, status, total_cents, created_at FROM orders ORDER BY created_at DESC LIMIT 100`;
     return NextResponse.json({ orders });
   } catch (error) {
     console.error("Order listing failed", error);
