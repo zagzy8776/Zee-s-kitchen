@@ -5,46 +5,11 @@ import { db } from "@/lib/db";
 import { adminCookieName, isAdminToken } from "@/lib/admin-auth";
 
 async function authorized(){return isAdminToken((await cookies()).get(adminCookieName())?.value)}
+function cloudinaryPublicId(image:string){try{const url=new URL(image);if(!url.hostname.endsWith("cloudinary.com"))return null;const match=url.pathname.match(/\/upload\/(?:v\d+\/)?(.+)$/);if(!match)return null;return decodeURIComponent(match[1]).replace(/\.[^.\/]+$/,"")}catch{return null}}
+async function destroyCloudinaryImage(image:string){const cloudName=process.env.CLOUDINARY_CLOUD_NAME,apiKey=process.env.CLOUDINARY_API_KEY,apiSecret=process.env.CLOUDINARY_API_SECRET,publicId=cloudinaryPublicId(image);if(!cloudName||!apiKey||!apiSecret||!publicId)return;const timestamp=Math.floor(Date.now()/1000).toString(),serialized=`public_id=${publicId}&timestamp=${timestamp}`,sig=crypto.createHash("sha1").update(serialized+apiSecret).digest("hex"),body=new URLSearchParams({public_id:publicId,timestamp,api_key:apiKey,signature:sig});const response=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,{method:"POST",body});if(!response.ok)console.error("Cloudinary image deletion failed",await response.text())}
+async function saveOptions(sql:any,itemId:string,options:any[]){await sql`DELETE FROM menu_item_options WHERE menu_item_id=${itemId}`;for(let i=0;i<options.length;i++){const o=options[i];if(!o?.name?.trim())continue;const oid=String(o.id||`option-${itemId}-${i}-${Date.now()}`);const min=Math.max(0,Number.isInteger(o.min_quantity)?o.min_quantity:0),max=Math.max(min,Number.isInteger(o.max_quantity)?o.max_quantity:1);await sql`INSERT INTO menu_item_options(id,menu_item_id,name,option_type,required,min_quantity,max_quantity,sort_order) VALUES(${oid},${itemId},${o.name.trim()},${o.option_type==="quantity"?"quantity":"choice"},${Boolean(o.required)},${min},${max},${i})`;for(let j=0;j<(Array.isArray(o.values)?o.values:[]).length;j++){const v=o.values[j];if(!v?.label?.trim())continue;const vid=String(v.id||`value-${oid}-${j}-${Date.now()}`);const delta=Number.isInteger(v.price_delta_cents)?v.price_delta_cents:0;await sql`INSERT INTO menu_item_option_values(id,option_id,label,price_delta_cents,sort_order) VALUES(${vid},${oid},${v.label.trim()},${delta},${j})`}}}
+async function readOptions(sql:any,itemId:string){const options=await sql`SELECT id,menu_item_id,name,option_type,required,min_quantity,max_quantity,sort_order FROM menu_item_options WHERE menu_item_id=${itemId} ORDER BY sort_order ASC,id ASC`;if(!options.length)return[];const ids=options.map((o:any)=>o.id),values=await sql`SELECT id,option_id,label,price_delta_cents,sort_order FROM menu_item_option_values WHERE option_id=ANY(${ids}) ORDER BY sort_order ASC,id ASC`;return options.map((o:any)=>({...o,values:values.filter((v:any)=>v.option_id===o.id)}))}
 
-function cloudinaryPublicId(image: string) {
-  try {
-    const url = new URL(image);
-    if (!url.hostname.endsWith("cloudinary.com")) return null;
-    const match = url.pathname.match(/\/upload\/(?:v\d+\/)?(.+)$/);
-    if (!match) return null;
-    return decodeURIComponent(match[1]).replace(/\.[^.\/]+$/, "");
-  } catch { return null; }
-}
+export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}){if(!(await authorized()))return NextResponse.json({error:"Unauthorized"},{status:401});try{const{id}=await params,body=await request.json(),allowed=["name","description","priceCents","category","image","available","sortOrder","options"],keys=Object.keys(body);if(!keys.length||keys.some(k=>!allowed.includes(k)))return NextResponse.json({error:"Invalid fields"},{status:400});const sql=db(),[item]=await sql`SELECT * FROM menu_items WHERE id=${id}`;if(!item)return NextResponse.json({error:"Menu item not found"},{status:404});const name=body.name??item.name,description=body.description??item.description,price=body.priceCents??item.price_cents,category=body.category??item.category,image=body.image??item.image,available=body.available??item.available,sort=body.sortOrder??item.sort_order;if(typeof name!=="string"||!name.trim()||!Number.isInteger(price)||price<0||typeof category!=="string"||!category.trim()||!Number.isInteger(sort)||sort<0)return NextResponse.json({error:"Invalid menu item"},{status:400});const[result]=await sql`UPDATE menu_items SET name=${name.trim()},description=${String(description||"").trim()},price_cents=${price},category=${category.trim()},image=${String(image||"").trim()},available=${Boolean(available)},sort_order=${sort},updated_at=NOW() WHERE id=${id} RETURNING *`;if(Array.isArray(body.options))await saveOptions(sql,id,body.options);return NextResponse.json({item:{...result,options:await readOptions(sql,id)}})}catch(e){console.error(e);return NextResponse.json({error:"Unable to update menu item"},{status:500})}}
 
-async function destroyCloudinaryImage(image: string) {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
-  const publicId = cloudinaryPublicId(image);
-  if (!cloudName || !apiKey || !apiSecret || !publicId) return;
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const serialized = `public_id=${publicId}&timestamp=${timestamp}`;
-  const sig = crypto.createHash("sha1").update(serialized + apiSecret).digest("hex");
-  const body = new URLSearchParams({ public_id: publicId, timestamp, api_key: apiKey, signature: sig });
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, { method: "POST", body });
-  if (!response.ok) console.error("Cloudinary image deletion failed", await response.text());
-}
-
-export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}){
- if(!(await authorized()))return NextResponse.json({error:"Unauthorized"},{status:401});
- try{const{id}=await params;const body=await request.json();const allowed=["name","description","priceCents","category","image","available","sortOrder"];const keys=Object.keys(body);if(!keys.length||keys.some(k=>!allowed.includes(k)))return NextResponse.json({error:"Invalid fields"},{status:400});
- const sql=db();const[item]=await sql`SELECT * FROM menu_items WHERE id=${id}`;if(!item)return NextResponse.json({error:"Menu item not found"},{status:404});
- const name=body.name??item.name,description=body.description??item.description,price=body.priceCents??item.price_cents,category=body.category??item.category,image=body.image??item.image,available=body.available??item.available,sort=body.sortOrder??item.sort_order;
- if(typeof name!=="string"||!name.trim()||!Number.isInteger(price)||price<0||typeof category!=="string"||!category.trim()||!Number.isInteger(sort)||sort<0)return NextResponse.json({error:"Invalid menu item"},{status:400});
- const[result]=await sql`UPDATE menu_items SET name=${name.trim()},description=${String(description||"").trim()},price_cents=${price},category=${category.trim()},image=${String(image||"").trim()},available=${Boolean(available)},sort_order=${sort},updated_at=NOW() WHERE id=${id} RETURNING *`;return NextResponse.json({item:result});
- }catch(e){console.error(e);return NextResponse.json({error:"Unable to update menu item"},{status:500})}
-}
-
-export async function DELETE(_request:Request,{params}:{params:Promise<{id:string}>}){
- if(!(await authorized()))return NextResponse.json({error:"Unauthorized"},{status:401});
- try{const{id}=await params;const sql=db();const[item]=await sql`SELECT * FROM menu_items WHERE id=${id}`;if(!item)return NextResponse.json({error:"Menu item not found"},{status:404});
- await sql`DELETE FROM menu_items WHERE id=${id}`;
- try{await destroyCloudinaryImage(item.image||"")}catch(error){console.error("Cloudinary cleanup failed",error)}
- return NextResponse.json({ok:true});
- }catch(e){console.error("Menu delete failed",e);return NextResponse.json({error:"Unable to delete menu item"},{status:500})}
-}
+export async function DELETE(_request:Request,{params}:{params:Promise<{id:string}>}){if(!(await authorized()))return NextResponse.json({error:"Unauthorized"},{status:401});try{const{id}=await params,sql=db(),[item]=await sql`SELECT * FROM menu_items WHERE id=${id}`;if(!item)return NextResponse.json({error:"Menu item not found"},{status:404});await sql`DELETE FROM menu_items WHERE id=${id}`;try{await destroyCloudinaryImage(item.image||"")}catch(error){console.error("Cloudinary cleanup failed",error)}return NextResponse.json({ok:true})}catch(e){console.error("Menu delete failed",e);return NextResponse.json({error:"Unable to delete menu item"},{status:500})}}
