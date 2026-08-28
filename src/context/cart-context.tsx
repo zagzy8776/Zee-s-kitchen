@@ -1,37 +1,5 @@
 "use client";
-
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { MenuItem } from "@/lib/menu";
-
-type CartLine = MenuItem & { quantity: number };
-type CartContextValue = { items: CartLine[]; count: number; total: number; add: (item: MenuItem) => void; remove: (id: string) => void; clear: () => void };
-
-const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = "zees-kitchen-cart";
-
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartLine[]>([]);
-
-  useEffect(() => {
-    try { setItems(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")); } catch { setItems([]); }
-  }, []);
-
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }, [items]);
-
-  const value = useMemo(() => ({
-    items,
-    count: items.reduce((sum, item) => sum + item.quantity, 0),
-    total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    add: (item: MenuItem) => setItems((current) => current.some((x) => x.id === item.id) ? current.map((x) => x.id === item.id ? { ...x, quantity: x.quantity + 1 } : x) : [...current, { ...item, quantity: 1 }]),
-    remove: (id: string) => setItems((current) => current.flatMap((x) => x.id !== id ? [x] : x.quantity > 1 ? [{ ...x, quantity: x.quantity - 1 }] : [])),
-    clear: () => setItems([]),
-  }), [items]);
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-}
-
-export function useCart() {
-  const context = useContext(CartContext);
-  if (!context) throw new Error("useCart must be used inside CartProvider");
-  return context;
-}
+import {createContext,useContext,useEffect,useMemo,useState} from "react";import type {MenuItem} from "@/lib/menu";
+export type SelectedOption={optionId:string;name:string;valueId?:string;label?:string;quantity?:number;priceDeltaCents?:number};export type CartLine=MenuItem&{quantity:number;selectedOptions?:SelectedOption[];lineId:string};type CartContextValue={items:CartLine[];count:number;total:number;add:(item:MenuItem&{selectedOptions?:SelectedOption[]})=>void;remove:(lineId:string)=>void;clear:()=>void};const CartContext=createContext<CartContextValue|null>(null);const STORAGE_KEY="zees-kitchen-cart";
+function makeLineId(item:MenuItem&{selectedOptions?:SelectedOption[]}){const opts=(item.selectedOptions||[]).map(o=>`${o.optionId}:${o.valueId||""}:${o.quantity||""}`).join("|");return `${item.id}::${opts}`}
+export function CartProvider({children}:{children:React.ReactNode}){const[items,setItems]=useState<CartLine[]>([]);useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");setItems(saved.map((x:CartLine)=>({...x,lineId:x.lineId||makeLineId(x)})))}catch{setItems([])}},[]);useEffect(()=>{localStorage.setItem(STORAGE_KEY,JSON.stringify(items))},[items]);const value=useMemo(()=>({items,count:items.reduce((s,i)=>s+i.quantity,0),total:items.reduce((s,i)=>s+i.price*i.quantity,0),add:(item:MenuItem&{selectedOptions?:SelectedOption[]})=>setItems(current=>{const lineId=makeLineId(item);const existing=current.find(x=>x.lineId===lineId);return existing?current.map(x=>x.lineId===lineId?{...x,quantity:x.quantity+1}:x):[...current,{...item,quantity:1,lineId}]}),remove:(lineId:string)=>setItems(current=>current.flatMap(x=>x.lineId!==lineId?[x]:x.quantity>1?[{...x,quantity:x.quantity-1}]:[])),clear:()=>setItems([])}),[items]);return <CartContext.Provider value={value}>{children}</CartContext.Provider>};export function useCart(){const c=useContext(CartContext);if(!c)throw Error("useCart must be used inside CartProvider");return c}
