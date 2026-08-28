@@ -1,66 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useCart } from "@/context/cart-context";
-import type { MenuItem } from "@/lib/menu";
-import "../globals.css";
-import "./menu.css";
-
-type DbItem = MenuItem & { price_cents: number; available: boolean };
-
-export default function MenuPage() {
-  const { add } = useCart();
-  const [items, setItems] = useState<DbItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/menu", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => setItems((d.items || []).map((i: DbItem) => ({ ...i, price: i.price_cents / 100 }))))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const groups = items.reduce<Record<string, DbItem[]>>((acc, item) => {
-    (acc[item.category] ??= []).push(item);
-    return acc;
-  }, {});
-
-  return (
-    <main className="menu-page shell">
-      <a className="back" href="/">← Back home</a>
-      <header className="menu-header">
-        <p className="eyebrow">ZEE&apos;S KITCHEN</p>
-        <h1>The menu.</h1>
-        <p>Freshly prepared comfort food. Please allow 24–48 hours for orders.</p>
-      </header>
-      <div className="menu-list">
-        {loading ? (
-          <p>Loading today&apos;s menu…</p>
-        ) : (
-          Object.entries(groups).map(([category, group]) => (
-            <section key={category}>
-              <h2>{category}</h2>
-              {group.map((item, index) => (
-                <article className="menu-row" key={item.id}>
-                  <div>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <div>
-                      <h3>{item.name}</h3>
-                      <small>{item.description}</small>
-                    </div>
-                  </div>
-                  <button type="button" disabled={!item.available} onClick={() => add({ ...item, price: item.price_cents / 100 })}>
-                    {item.available ? <>Add to order <b>+</b></> : "Sold out"}
-                  </button>
-                </article>
-              ))}
-            </section>
-          ))
-        )}
-      </div>
-      <div className="menu-cta">
-        <strong>Ready to order?</strong>
-        <a className="primary" href="/cart">View your order <span>→</span></a>
-      </div>
-    </main>
-  );
-}
+import {useEffect,useState} from "react";import {useCart} from "@/context/cart-context";import type {MenuItem} from "@/lib/menu";import "../globals.css";import "./menu.css";
+type Value={id:string;label:string;price_delta_cents:number;sort_order:number};type Option={id:string;name:string;option_type:"choice"|"quantity";required:boolean;min_quantity:number;max_quantity:number;sort_order:number;values:Value[]};type DbItem=MenuItem&{price_cents:number;available:boolean;options?:Option[]};
+export default function MenuPage(){const{add}=useCart();const[items,setItems]=useState<DbItem[]>([]);const[loading,setLoading]=useState(true);const[selected,setSelected]=useState<DbItem|null>(null);const[choices,setChoices]=useState<Record<string,string>>({});const[quantities,setQuantities]=useState<Record<string,number>>({});useEffect(()=>{fetch("/api/menu",{cache:"no-store"}).then(r=>r.json()).then(d=>setItems((d.items||[]).map((i:DbItem)=>({...i,price:i.price_cents/100}))).finally(()=>setLoading(false))},[]);
+const groups=items.reduce<Record<string,DbItem[]>>((a,i)=>(a[i.category]??=[]).push(i),{} as any);
+function open(item:DbItem){if(!item.options?.length){add({...item,price:item.price_cents/100});return}setSelected(item);setChoices({});setQuantities(Object.fromEntries(item.options.filter(o=>o.option_type==="quantity").map(o=>[o.id,o.min_quantity||1])))}
+function confirm(){if(!selected)return;for(const o of selected.options||[]){if(o.option_type==="choice"&&o.required&&!choices[o.id])return}let extra=0;const selectedOptions=(selected.options||[]).map(o=>{if(o.option_type==="choice"){const v=o.values.find(x=>x.id===choices[o.id]);if(v){extra+=v.price_delta_cents/100;return{optionId:o.id,name:o.name,valueId:v.id,label:v.label,priceDeltaCents:v.price_delta_cents}}}const q=quantities[o.id]??o.min_quantity;return{optionId:o.id,name:o.name,quantity:q}});add({...selected,price:selected.price_cents/100+extra,selectedOptions} as any);setSelected(null)}
+return <main className="menu-page shell"><a className="back" href="/">← Back home</a><header className="menu-header"><p className="eyebrow">ZEE&apos;S KITCHEN</p><h1>The menu.</h1><p>Freshly prepared comfort food. Please allow 24–48 hours for orders.</p></header><div className="menu-list">{loading?<p>Loading today&apos;s menu…</p>:Object.entries(groups).map(([category,group])=><section key={category}><h2>{category}</h2>{group.map((item,index)=><article className="menu-row" key={item.id}><div><span>{String(index+1).padStart(2,"0")}</span><div><h3>{item.name}</h3><small>{item.description}</small></div></div><button type="button" disabled={!item.available} onClick={()=>open(item)}>{item.available?<> {item.options?.length?"Choose options":"Add to order"} <b>+</b></>:"Sold out"}</button></article>)}</section>)}</div><div className="menu-cta"><strong>Ready to order?</strong><a className="primary" href="/cart">View your order <span>→</span></a></div>{selected&&<div className="menu-option-backdrop" onClick={()=>setSelected(null)}><div className="menu-option-sheet" onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true"><button className="option-close" onClick={()=>setSelected(null)} aria-label="Close">×</button><p className="eyebrow">CUSTOMIZE YOUR ORDER</p><h2>{selected.name}</h2><p className="option-base">Starting at ${(selected.price_cents/100).toFixed(2)} CAD</p>{selected.options?.map(o=><section className="customer-option" key={o.id}><div><strong>{o.name}</strong>{o.required&&<small>Required</small>}</div>{o.option_type==="choice"?<div className="choice-list">{o.values.map(v=><label key={v.id} className={choices[o.id]===v.id?"chosen":""}><input type="radio" name={o.id} checked={choices[o.id]===v.id} onChange={()=>setChoices({...choices,[o.id]:v.id})}/><span>{v.label}</span>{v.price_delta_cents>0&&<b>+${(v.price_delta_cents/100).toFixed(2)}</b>}</label>)}</div>:<div className="quantity-control"><button onClick={()=>setQuantities({...quantities,[o.id]:Math.max(o.min_quantity,(quantities[o.id]??o.min_quantity)-1)})}>−</button><strong>{quantities[o.id]??o.min_quantity}</strong><button onClick={()=>setQuantities({...quantities,[o.id]:Math.min(o.max_quantity,(quantities[o.id]??o.min_quantity)+1)})}>+</button></div>}</section>)}<button className="primary option-add" onClick={confirm}>Add to order <span>→</span></button></div></div>}</main>}
