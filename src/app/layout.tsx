@@ -12,12 +12,10 @@ export const metadata: Metadata = {
   },
   description: BUSINESS.description,
   keywords: [
-    // Brand
     "Zee's Kitchen",
     "Zee's Comfort Kitchen",
     "Zees Kitchen Winnipeg",
     "Zee comfort kitchen",
-    // Core local
     "comfort food Winnipeg",
     "order food Winnipeg",
     "food delivery Winnipeg",
@@ -25,7 +23,6 @@ export const metadata: Metadata = {
     "order ahead Winnipeg",
     "home cooked meals Winnipeg",
     "family meals Winnipeg",
-    // Cuisine
     "African food Winnipeg",
     "West African food Winnipeg",
     "Nigerian food Winnipeg",
@@ -36,7 +33,6 @@ export const metadata: Metadata = {
     "plantain Winnipeg",
     "African restaurant Winnipeg",
     "African takeout Winnipeg",
-    // Manitoba / metro
     "comfort food Manitoba",
     "African food Manitoba",
     "catering Winnipeg",
@@ -51,7 +47,6 @@ export const metadata: Metadata = {
     "Selkirk Manitoba food",
     "Steinbach takeout",
     "Brandon Manitoba catering",
-    // Intent
     "order jollof online",
     "24 hour notice food order",
     "freshly prepared meals Winnipeg",
@@ -92,7 +87,7 @@ export const metadata: Metadata = {
     },
   },
   manifest: "/manifest.webmanifest",
-  themeColor: "#111111",
+  themeColor: "#f6eee6",
   appleWebApp: {
     capable: true,
     title: "Zee's Kitchen",
