@@ -8,6 +8,7 @@ import {
   SITE_URL,
 } from "@/lib/canada-locations";
 import "../globals.css";
+import "./locations.css";
 
 export const metadata: Metadata = {
   title: `Order Comfort Food Across Canada | ${BUSINESS.name}`,
