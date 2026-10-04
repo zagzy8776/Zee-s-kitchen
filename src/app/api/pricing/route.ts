@@ -15,24 +15,51 @@ const KEYS = [
   "delivery_cities",
 ] as const;
 
+async function ensureSettings(sql: any) {
+  await sql`CREATE TABLE IF NOT EXISTS business_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  await sql`INSERT INTO business_settings(key,value) VALUES
+    ('currency','CAD'),
+    ('tax_rate','0.05'),
+    ('delivery_fee_cents','500'),
+    ('lead_hours','24'),
+    ('min_delivery_order_cents','3500'),
+    ('payment_note','Payment is arranged after we confirm your order. We accept Interac e-Transfer. Details are sent when Zee confirms.'),
+    ('etransfer_email',''),
+    ('pickup_note','Pickup location is confirmed by WhatsApp when your order is accepted.'),
+    ('delivery_cities','Winnipeg')
+    ON CONFLICT(key) DO NOTHING`;
+}
+
 export async function GET() {
   try {
     const sql = db();
-    // Ensure defaults exist
-    await sql`INSERT INTO business_settings(key,value) VALUES
-      ('currency','CAD'),('tax_rate','0.05'),('delivery_fee_cents','500'),
-      ('lead_hours','24'),('min_delivery_order_cents','3500'),
-      ('payment_note','Payment is arranged after we confirm your order. We accept Interac e-Transfer. Details are sent when Zee confirms.'),
-      ('etransfer_email',''),('pickup_note','Pickup location is confirmed by WhatsApp when your order is accepted.'),
-      ('delivery_cities','Winnipeg')
-      ON CONFLICT(key) DO NOTHING`;
+    await ensureSettings(sql);
     const rows =
       await sql`SELECT key,value FROM business_settings WHERE key = ANY(${KEYS as unknown as string[]})`;
     return NextResponse.json({
       settings: Object.fromEntries(rows.map((r: any) => [r.key, r.value])),
     });
-  } catch {
-    return NextResponse.json({ error: "Unable to load pricing" }, { status: 500 });
+  } catch (e) {
+    console.error("Pricing load failed", e);
+    // Fallback so checkout UI still works even if DB hiccups
+    return NextResponse.json({
+      settings: {
+        currency: "CAD",
+        tax_rate: "0.05",
+        delivery_fee_cents: "500",
+        lead_hours: "24",
+        min_delivery_order_cents: "3500",
+        payment_note:
+          "Payment is arranged after we confirm your order. We accept Interac e-Transfer.",
+        pickup_note:
+          "Pickup location is confirmed by WhatsApp when your order is accepted.",
+        delivery_cities: "Winnipeg",
+      },
+    });
   }
 }
 
@@ -59,7 +86,6 @@ export async function PATCH(request: Request) {
     if (!updates.length)
       return NextResponse.json({ error: "No settings provided" }, { status: 400 });
 
-    // Basic validation for numeric fields
     for (const [k, v] of updates) {
       if (k === "currency" && !/^[A-Z]{3}$/.test(v))
         return NextResponse.json({ error: "Invalid currency" }, { status: 400 });
@@ -78,10 +104,12 @@ export async function PATCH(request: Request) {
     }
 
     const sql = db();
+    await ensureSettings(sql);
     for (const [key, value] of updates)
       await sql`INSERT INTO business_settings(key,value,updated_at) VALUES(${key},${value},NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`;
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (e) {
+    console.error("Pricing update failed", e);
     return NextResponse.json({ error: "Unable to update pricing" }, { status: 500 });
   }
 }
