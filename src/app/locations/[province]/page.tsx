@@ -9,6 +9,7 @@ import {
   SITE_URL,
 } from "@/lib/canada-locations";
 import "../../globals.css";
+import "../locations.css";
 
 type Props = { params: Promise<{ province: string }> };
 
