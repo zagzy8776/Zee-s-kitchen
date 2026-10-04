@@ -18,9 +18,17 @@ export async function GET() {
       image TEXT NOT NULL DEFAULT '',
       available BOOLEAN NOT NULL DEFAULT TRUE,
       sort_order INTEGER NOT NULL DEFAULT 0,
+      allergens TEXT NOT NULL DEFAULT '',
+      spice_level TEXT NOT NULL DEFAULT 'mild',
+      serves TEXT NOT NULL DEFAULT '',
+      prep_hours INTEGER NOT NULL DEFAULT 24,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
+    await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS allergens TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS spice_level TEXT NOT NULL DEFAULT 'mild'`;
+    await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS serves TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS prep_hours INTEGER NOT NULL DEFAULT 24`;
     await sql`CREATE TABLE IF NOT EXISTS menu_item_options (
       id TEXT PRIMARY KEY,
       menu_item_id TEXT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
@@ -41,16 +49,35 @@ export async function GET() {
     )`;
     await sql`CREATE INDEX IF NOT EXISTS menu_item_options_item_idx ON menu_item_options(menu_item_id,sort_order)`;
     await sql`CREATE INDEX IF NOT EXISTS menu_item_option_values_option_idx ON menu_item_option_values(option_id,sort_order)`;
-    const items = await sql`SELECT id,name,description,price_cents,category,image,available,sort_order FROM menu_items ORDER BY sort_order ASC,name ASC`;
-    const options = await sql`SELECT id,menu_item_id,name,option_type,required,min_quantity,max_quantity,sort_order FROM menu_item_options ORDER BY sort_order ASC,id ASC`;
-    const values = await sql`SELECT id,option_id,label,price_delta_cents,sort_order FROM menu_item_option_values ORDER BY sort_order ASC,id ASC`;
+    const items =
+      await sql`SELECT id,name,description,price_cents,category,image,available,sort_order,allergens,spice_level,serves,prep_hours FROM menu_items ORDER BY sort_order ASC,name ASC`;
+    const options =
+      await sql`SELECT id,menu_item_id,name,option_type,required,min_quantity,max_quantity,sort_order FROM menu_item_options ORDER BY sort_order ASC,id ASC`;
+    const values =
+      await sql`SELECT id,option_id,label,price_delta_cents,sort_order FROM menu_item_option_values ORDER BY sort_order ASC,id ASC`;
     const byOption = new Map<string, any[]>();
-    for (const value of values) byOption.set(value.option_id,[...(byOption.get(value.option_id)||[]),value]);
+    for (const value of values)
+      byOption.set(value.option_id, [...(byOption.get(value.option_id) || []), value]);
     const byItem = new Map<string, any[]>();
-    for (const option of options) byItem.set(option.menu_item_id,[...(byItem.get(option.menu_item_id)||[]),{...option,values:byOption.get(option.id)||[]}]);
-    return NextResponse.json({ items: items.map((item:any)=>({...item,options:byItem.get(item.id)||[]})) }, { headers: { "Cache-Control": "no-store" } });
+    for (const option of options)
+      byItem.set(option.menu_item_id, [
+        ...(byItem.get(option.menu_item_id) || []),
+        { ...option, values: byOption.get(option.id) || [] },
+      ]);
+    return NextResponse.json(
+      {
+        items: items.map((item: any) => ({
+          ...item,
+          options: byItem.get(item.id) || [],
+        })),
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (error) {
     console.error("Admin menu load failed", error);
-    return NextResponse.json({ error: "Unable to load menu. Please check the database connection." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to load menu. Please check the database connection." },
+      { status: 500 },
+    );
   }
 }

@@ -25,6 +25,10 @@ type Option = {
 type DbItem = MenuItem & {
   price_cents: number;
   available: boolean;
+  allergens?: string;
+  spice_level?: string;
+  serves?: string;
+  prep_hours?: number;
   options?: Option[];
 };
 
@@ -112,7 +116,8 @@ export default function MenuPage() {
         <h1>The menu.</h1>
         <p>
           Freshly prepared comfort food. Photos are updated from the kitchen.
-          Please allow 24–48 hours for orders.
+          Please allow 24–48 hours for orders. See{" "}
+          <a href="/faq">ordering FAQ</a> for payment, allergens and delivery.
         </p>
       </header>
 
@@ -143,11 +148,25 @@ export default function MenuPage() {
                       {!item.available && (
                         <span className="sold-out-badge">Sold out</span>
                       )}
+                      {item.spice_level && item.spice_level !== "mild" && (
+                        <span className={`spice-badge spice-${item.spice_level}`}>
+                          {item.spice_level}
+                        </span>
+                      )}
                     </div>
                     <div className="menu-photo-info">
                       <div>
                         <h3>{item.name}</h3>
                         <small>{item.description}</small>
+                        <div className="menu-tags">
+                          {item.serves && <span>{item.serves}</span>}
+                          {item.allergens && (
+                            <span className="tag-allergen">{item.allergens}</span>
+                          )}
+                          {item.prep_hours && item.prep_hours > 24 && (
+                            <span>{item.prep_hours}h notice</span>
+                          )}
+                        </div>
                       </div>
                       <div className="menu-photo-meta">
                         <strong>
@@ -210,6 +229,7 @@ export default function MenuPage() {
             <h2>{selected.name}</h2>
             <p className="option-base">
               Starting at ${(selected.price_cents / 100).toFixed(2)} CAD
+              {selected.allergens ? ` · ${selected.allergens}` : ""}
             </p>
             {selected.options?.map((o) => (
               <section className="customer-option" key={o.id}>
